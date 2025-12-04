@@ -1,0 +1,20 @@
+name: '缓存处理'
+description: '公共的缓存'
+runs:
+  using: composite
+  steps:
+    - name: Get current date
+      shell: bash
+      run: |
+          echo "TASK_CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo  $(date "+%Y-%m-%d-%H:%M")
+    - name: 缓存数据配置
+      id: revertCacheConfig
+      uses: actions/cache@v4
+      with:
+        path: data/*.json
+        key: config-${{github.job}}-${{env.TASK_CURRENT_DATE}}-${{ github.run_id }}
+        restore-keys: |
+           config-${{github.job}}-${{env.TASK_CURRENT_DATE}}-${{ hashFiles('data/*.json') }}
+           config-${{github.job}}-${{env.TASK_CURRENT_DATE}}-
+        

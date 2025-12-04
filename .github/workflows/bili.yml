@@ -1,0 +1,34 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: bilibili签到
+
+on:
+  workflow_dispatch:
+  #  push:
+  #    branches: [ "master" ]
+  #  pull_request:
+  #    branches: [ "master" ]
+  schedule:
+    - cron: 36 18,19 * * *
+
+permissions:
+  contents: read
+
+jobs:
+  bilibiliTask:
+    name: '签到'
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/action/base-environment
+      - uses: ./.github/action/cache-data
+      - name: 启动签到
+        env:
+          MULTI: ${{ vars.MULTI }}
+          PUSH: ${{ secrets.PUSH  }}
+          BILIBILI_COOKIE: ${{ secrets.BILIBILI_COOKIE  }}
+        run: |
+          python3 index.py
