@@ -36,7 +36,7 @@ class PushSender:
             return WorkWechatRobot(key)
         elif type == "workWechat":
             return WorkWechatApp(key)
-        elif type == "email":
+        elif type == "mail":
             # key转成json对象
             email_config = json.loads(key)
             return Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'], email_config['from'], email_config['to'], email_config['receives'])
