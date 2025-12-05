@@ -20,9 +20,6 @@ def get_content_body(soup):
     return soup.select_one(".box-body.nvl-content")
 
 
-
-
-
 def is_login(soap):
     """检查是否登录"""
     return soap.select_one("#loginb input[name='password']")
@@ -39,7 +36,7 @@ def build_logger():
         uname = 'RedFlag'
     base_name = os.path.join("logs", uname)
     log = logging.getLogger(base_name)
-    #os.system("ls -al ~")
+    # os.system("ls -al ~")
     log.setLevel(logging.DEBUG)
     if log.handlers:
         return log
@@ -79,7 +76,6 @@ def build_cookie(response):
     return cookie
 
 
-
 def dump_json_to_file(file_name, data):
     """保持文件信息"""
     with open(file_name) as f:
@@ -102,6 +98,15 @@ def doSend(title, message):
     else:
         parse_msg = parse(message, template="markdown")
         email_config = json.loads(push_together['key'])
+
+        print(f"消息接收人列表：{email_config['receives']} {type(email_config['receives'])}" )
+
         # 固定发送邮件
-        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send(title, parse_msg,email_config['from'],email_config['to'],email_config['receives'])
+        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send(title,
+                                                                                                          parse_msg,
+                                                                                                          str(f'ddd <{email_config["from"]}>'),
+                                                                                                          str(email_config[
+                                                                                                              'to']),
+                                                                                                          email_config[
+                                                                                                              'receives'])
         # Qmsg(push_together['key']).send(parse_msg, title=title)
