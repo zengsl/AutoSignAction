@@ -237,8 +237,9 @@ def quark_main():
 
         i += 1
     try:
-        send('夸克自动签到', msg)
+        send('夸克自动签到', '成功')
     except Exception as err:
+        send('夸克自动签到出现异常', err)
         print('%s\n❌ 错误，请查看运行日志！' % err)
 
     return msg[:-1]
