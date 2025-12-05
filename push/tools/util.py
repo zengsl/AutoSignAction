@@ -101,6 +101,8 @@ def doSend(title, message):
         print(f"消息接收人列表：{email_config['receives']} {type(email_config['receives'])}")
 
         # 固定发送邮件
-        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send2(parse_msg,
-                                                                                                           title=title)
+        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'],
+             email_config["from"], email_config["to"], email_config["receives"]).send(
+            parse_msg,
+            title=title)
         # Qmsg(push_together['key']).send(parse_msg, title=title)

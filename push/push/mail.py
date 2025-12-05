@@ -21,14 +21,14 @@ class Mail:
         # self.log = print
 
     def send(self, msg, **kwargs):
-        return self.send(kwargs.get("title"), msg, self.mail_from, self.mail_to, self.receives)
+        return self.send2(kwargs.get("title"), msg, self.mail_from, self.mail_to, self.receives)
 
     def send2(self, subject, msg, form_header_, to_header, receivers=None):
 
         if receivers is None:
             receivers = []
         message = MIMEText(msg, 'html', 'utf-8')
-        message['From'] = Header(form_header_)
+        message['From'] = Header(str(f'ddd <{form_header_}>'))
         message['To'] = Header(to_header, 'utf-8')
         message['Subject'] = Header(subject, 'utf-8')
         for i in range(3):
