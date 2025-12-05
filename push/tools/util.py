@@ -101,8 +101,8 @@ def doSend(title, message):
         print(f"消息接收人列表：{email_config['receives']} {type(email_config['receives'])}" )
 
         # 固定发送邮件
-        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send('标题',
-                                                                                                          '正文：成功',
+        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send(title,
+                                                                                                          parse_msg,
                                                                                                           str(f'ddd <{email_config["from"]}>'),
                                                                                                           str(email_config[
                                                                                                               'to']),
