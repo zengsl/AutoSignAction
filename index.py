@@ -49,12 +49,12 @@ def pushMessage(message, config):
             t = item.get("type")
             info(f"消息类型：{t}")
             p = PushSender(t, item.get("key"))
-            p.send(parse_message(message, t), title="Bilibili")
+            p.send(parse_message(message, t), title="Bilibili任务")
     else:
         t = config.get("type")
         info(f"消息类型：{t}")
         p = PushSender(config.get("type"), config.get("key"))
-        p.send(parse_message(message, t), title="Bilibili")
+        p.send(parse_message(message, t), title="Bilibili任务")
 
 
 def bilibiliJob(*args):
