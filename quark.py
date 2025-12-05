@@ -19,8 +19,23 @@ def send(title, message):
 
 
 # 获取环境变量
+def get_env():
+    # 判断 COOKIE_QUARK是否存在于环境变量
+    if "COOKIE_QUARK" in os.environ:
+        # 读取系统变量以 \n 或 && 分割变量
+        cookie_list = re.split('\n|&&', os.environ.get('COOKIE_QUARK'))
+    else:
+        # 标准日志输出
+        print('❌未添加COOKIE_QUARK变量')
+        send('夸克自动签到', '❌未添加COOKIE_QUARK变量')
+        # 脚本退出
+        sys.exit(0)
+
+    return cookie_list
+
 # def get_env():
 #     # 判断 COOKIE_QUARK是否存在于环境变量
+#     cookie_list = []
 #     if "COOKIE_QUARK" in os.environ:
 #         # 读取系统变量以 \n 或 && 分割变量
 #         cookie_list = re.split('\n|&&', os.environ.get('COOKIE_QUARK'))
@@ -32,21 +47,6 @@ def send(title, message):
 #         sys.exit(0)
 #
 #     return cookie_list
-
-def get_env():
-    # 判断 COOKIE_QUARK是否存在于环境变量
-    if "COOKIE_QUARK" in os.environ:
-        # 读取系统变量以 \n 或 && 分割变量
-        cookie_list = re.split('\n|&&', os.environ.get('COOKIE_QUARK'))
-    else:
-        # 标准日志输出
-        print('❌未添加COOKIE_QUARK变量')
-        # send('夸克自动签到', '❌未添加COOKIE_QUARK变量')
-        # 脚本退出
-        # sys.exit(0)
-
-    return [    "user=RedFlag; kps=AAQ90l30hlE9oHWHdS4h305kRVZAVIvwCFQcY7QyJZVpLmXC2ifbWfuRCIwSc7qxa6ceuaqKGEPvD5eGKxCX3nAgGjYYca5xqBlJytjqhwoR3w==; sign=AARzfc7xf0Xtnum3uNAHOeVeC/2qq6O26XRDTZz8cOmrqAWx2gnpijcmdUDQlxcR8cY=; vcode=1749795169347;"
-]
 
 
 # 其他代码...
