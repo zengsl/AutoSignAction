@@ -15,7 +15,7 @@ from push.tools.util import doSend
 def send(title, message):
     if not message:
         return
-    # doSend(title, message)
+    doSend(title, message)
 
 
 # 获取环境变量
