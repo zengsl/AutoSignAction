@@ -2,6 +2,8 @@ from .pushplus import Pushplus
 from .qmsg import Qmsg
 from .server import Server
 from .wechat import WorkWechatApp, WorkWechatRobot
+from .mail import Mail
+import json
 
 
 class PushComposite:
@@ -34,6 +36,10 @@ class PushSender:
             return WorkWechatRobot(key)
         elif type == "workWechat":
             return WorkWechatApp(key)
+        elif type == "email":
+            # key转成json对象
+            email_config = json.loads(key)
+            return Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'])
 
     def send(self, msg: str, **kwargs):
         self.push.send(msg, **kwargs)
