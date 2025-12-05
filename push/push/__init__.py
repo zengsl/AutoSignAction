@@ -39,7 +39,7 @@ class PushSender:
         elif type == "email":
             # key转成json对象
             email_config = json.loads(key)
-            return Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'])
+            return Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'], email_config['from'], email_config['to'], email_config['receives'])
 
     def send(self, msg: str, **kwargs):
         print(f"推送消息：{msg}")
