@@ -7,6 +7,7 @@ from logging import handlers
 from bs4 import BeautifulSoup
 
 from push import parse, Qmsg
+from push.push import Mail
 
 
 def get_chapter_nodes(soup):
@@ -100,4 +101,7 @@ def doSend(title, message):
         """不发送消息"""
     else:
         parse_msg = parse(message, template="markdown")
-        Qmsg(push_together['key']).send(parse_msg, title=title)
+        email_config = json.loads(push_together['key'])
+        # 固定发送邮件
+        Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port']).send(title, parse_msg,email_config['from'],email_config['to'],email_config['receives'])
+        # Qmsg(push_together['key']).send(parse_msg, title=title)

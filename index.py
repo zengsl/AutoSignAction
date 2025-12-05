@@ -66,6 +66,7 @@ def bilibiliJob(*args):
         item['cookie']=cookie
         obj = BiliBili(**item)
         res = obj.start()
+        info(f"bilibili任务执行结果：{res}")
         if res:
             pushMessage(res, push_together)
 
