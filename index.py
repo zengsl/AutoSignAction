@@ -1,5 +1,6 @@
 import json
 import sys , os
+from push.tools.tools import failed, handler, info, success
 
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,10 +47,12 @@ def pushMessage(message, config):
     if isinstance(config, list):
         for item in config:
             t = item.get("type")
+            info(f"消息类型：{t}")
             p = PushSender(t, item.get("key"))
             p.send(parse_message(message, t), title="Bilibili")
     else:
         t = config.get("type")
+        info(f"消息类型：{t}")
         p = PushSender(config.get("type"), config.get("key"))
         p.send(parse_message(message, t), title="Bilibili")
 
