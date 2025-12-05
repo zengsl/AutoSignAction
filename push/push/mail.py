@@ -1,4 +1,3 @@
-
 import smtplib
 import time
 
@@ -7,7 +6,7 @@ from email.header import Header
 
 
 class Mail:
-    def __init__(self, mail_host, mail_user, mail_pass, port):
+    def __init__(self, mail_host, mail_user, mail_pass, port, mail_from, mail_to, receives):
         # 设置服务器
         self.mail_host = mail_host
         # 用户名
@@ -15,15 +14,21 @@ class Mail:
         # 口令
         self.mail_pass = mail_pass
         self.port = port
+        self.mail_from = mail_from
+        self.mail_to = mail_to
+        self.receives = receives
         # self.log = build_logger()
         # self.log = print
 
-    def send(self, subject, msg, form_header_, to_header, receivers=None):
+    def send(self, msg, **kwargs):
+        return self.send(kwargs.get("title"), msg, self.mail_from, self.mail_to, self.receives)
+
+    def send2(self, subject, msg, form_header_, to_header, receivers=None):
 
         if receivers is None:
             receivers = []
         message = MIMEText(msg, 'html', 'utf-8')
-        message['From'] = Header(form_header_ )
+        message['From'] = Header(form_header_)
         message['To'] = Header(to_header, 'utf-8')
         message['Subject'] = Header(subject, 'utf-8')
         for i in range(3):
@@ -42,14 +47,12 @@ class Mail:
         return 0
 
 
-
 if __name__ == '__main__':
     def send_mail(_now_date, _msg, task_name):
         """邮件发送"""
         qq = 'xxx@foxmail.com'
         mail = Mail("smtp.qq.com", 'xxx@foxmail.com', '', 465)
-        mail.send(str(f"测试账号可用"), str(_msg), str(f'ddd <{qq}>'), qq, [qq])
-
+        mail.send2(str(f"测试账号可用"), str(_msg), str(f'ddd <{qq}>'), qq, [qq])
 
     date = time.localtime()
     formate_time = time.strftime("%Y-%m-%d %H:%M:%S", date)
