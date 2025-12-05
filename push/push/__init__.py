@@ -42,4 +42,5 @@ class PushSender:
             return Mail(email_config['host'], email_config['user'], email_config['pass'], email_config['port'])
 
     def send(self, msg: str, **kwargs):
+        print(f"推送消息：{msg}")
         self.push.send(msg, **kwargs)
