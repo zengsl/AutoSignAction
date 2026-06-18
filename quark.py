@@ -7,6 +7,7 @@ import time
 import requests
 
 from push.tools.util import doSend
+from email_notifier import send_quark_notification
 
 # cookie_list = os.getenv("COOKIE_QUARK").split('\n|&&')
 
@@ -218,6 +219,7 @@ def quark_main():
 
     print("✅ 检测到共", len(cookie_quark), "个夸克账号\n")
 
+    all_results = []
     i = 0
     while i < len(cookie_quark):
         # 获取user_data参数
@@ -234,6 +236,7 @@ def quark_main():
         if log is None:
             return
         msg += log + "\n"
+        all_results.append(log)
 
         i += 1
     try:
@@ -241,6 +244,13 @@ def quark_main():
     except Exception as err:
         send('夸克自动签到出现异常', err)
         print('%s\n❌ 错误，请查看运行日志！' % err)
+
+    # 发送邮件通知
+    if all_results:
+        try:
+            send_quark_notification(all_results)
+        except Exception as e:
+            print(f"邮件通知发送异常: {e}")
 
     return msg[:-1]
 

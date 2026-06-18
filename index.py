@@ -7,6 +7,7 @@ base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 from bilibili import BiliBili
 from push import PushSender, parse
+from email_notifier import send_bilibili_notification
 
 import logging
 from logging import handlers
@@ -62,6 +63,7 @@ def bilibiliJob(*args):
     push_together = json.loads(os.environ.get("PUSH", default="{}"), strict=False)
     cookie= os.environ.get("BILIBILI_COOKIE", default="{}")
 
+    all_results = []
     for item in accounts:
         item['cookie']=cookie
         obj = BiliBili(**item)
@@ -69,6 +71,16 @@ def bilibiliJob(*args):
         info(f"bilibili任务执行结果：{res}")
         if res:
             pushMessage(res, push_together)
+            # 收集原始数据用于邮件通知
+            if hasattr(obj, '_raw_result'):
+                all_results.append(obj._raw_result)
+
+    # 发送邮件通知
+    if all_results:
+        try:
+            send_bilibili_notification(all_results)
+        except Exception as e:
+            info(f"邮件通知发送异常: {e}")
 
 
 

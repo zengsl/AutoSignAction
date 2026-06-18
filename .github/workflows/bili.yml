@@ -30,5 +30,10 @@ jobs:
           MULTI: ${{ vars.MULTI }}
           PUSH: ${{ secrets.PUSH  }}
           BILIBILI_COOKIE: ${{ secrets.BILIBILI_COOKIE  }}
+          EMAIL_SMTP_SERVER: ${{ secrets.EMAIL_SMTP_SERVER }}
+          EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
         run: |
           python3 index.py

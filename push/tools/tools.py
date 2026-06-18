@@ -3,6 +3,9 @@ def handler(fn):
         res = fn(*args, **kwargs)
         if res is None:
             return None
+        # 保存原始数据到实例属性，供邮件通知使用
+        if args and hasattr(args[0], '__dict__'):
+            args[0]._raw_result = res
         content = [
             {
                 "h4": {
