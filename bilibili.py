@@ -106,7 +106,7 @@ class BiliBili:
                     "title": data["title"],  # 视频标题
                 }
             else:
-                failed(f"获取视频信息失败, 原因: {rep['message']}")
+                failed(f"获取视频信息接口返回异常: code={rep['code']}, message={rep['message']}")
         except Exception as ex:
             failed(f"获取视频信息时出错, 原因: {ex}")
 
@@ -127,10 +127,11 @@ class BiliBili:
                 self.coin = data["coins"]  # 硬币数
                 self.exp = f"{current_exp}/{next_exp}"  # 经验
                 self.silence = data["silence"]  # 不知道是什么
-                
+
                 success(f"获取用户信息成功, 用户: {self.name}")
             else:
                 self.login = rep["message"]!='账号未登录'
+                failed(f"获取用户信息接口返回异常: code={rep['code']}, message={rep['message']}")
                 raise Exception(rep["message"])
         except Exception as ex:
             failed(f"获取用户信息时出错, 原因: {ex}")
@@ -159,6 +160,7 @@ class BiliBili:
                     "specialText": data["specialText"],
                 }
             else:
+                failed(f"直播签到接口返回异常: code={rep['code']}, message={rep['message']}")
                 raise Exception(rep["message"])
 
         except Exception as ex:
@@ -188,6 +190,7 @@ class BiliBili:
                 else:
                     return "unkown"
             else:
+                failed(f"漫画签到接口返回异常: code={rep['code']}, msg={rep.get('msg', 'Unknown error')}")
                 raise Exception(rep.get("msg", "Unknown error"))
         except Exception as ex:
             failed(f"漫画签到失败, {ex}")
@@ -200,7 +203,7 @@ class BiliBili:
 
             return rep["data"]["day_count"]
         else:
-            failed(f"获取漫画签到信息失败, 原因: {rep['msg']}")
+            failed(f"获取漫画签到信息接口返回异常: code={rep['code']}, msg={rep.get('msg', '未知错误')}")
 
     # 获取推荐视频
     @staticmethod
@@ -238,7 +241,7 @@ class BiliBili:
 
             return res
         else:
-            failed(f"获取视频推荐列表失败, 原因: {rep['message']}")
+            failed(f"获取视频推荐列表接口返回异常: code={rep['code']}, message={rep['message']}")
 
             return [{"bvid": "BV1LS4y1C7Pa"}]
 
@@ -280,7 +283,7 @@ class BiliBili:
                     coined += 1  # 投币次数加 1
                 else:
                     # 投币失败
-                    failed(f"给[{video['title']}]投币失败, 原因: {rep['message']}")
+                    failed(f"给[{video['title']}]投币接口返回异常: code={rep['code']}, message={rep['message']}")
             else:
                 success(f"投币完成, 今日共投了 {coined} 个硬币")
 
@@ -308,7 +311,7 @@ class BiliBili:
 
                 return video["title"]
             else:
-                failed(f"分享视频[{video['title']}]失败, {rep['message']}")
+                failed(f"分享视频[{video['title']}]接口返回异常: code={rep['code']}, message={rep['message']}")
                 if errorCount>3:
                     return
                 else:
@@ -375,8 +378,16 @@ class BiliBili:
 
                         # return f"观看视频[{video_info['title']}]成功"
                         return "观看视频成功"
+                    else:
+                        failed(f"观看视频心跳上报接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
+                else:
+                    failed(f"观看视频心跳接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
+            else:
+                failed(f"观看视频点击接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
 
             failed(f"观看视频失败, [{video_info['title']}]")
+        else:
+            failed(f"观看视频失败, 获取视频信息失败: {bvid}")
 
     # 银瓜子兑换银币
     def toCoin(self):
@@ -419,7 +430,7 @@ class BiliBili:
             
             success(f"获取硬币投递情况成功, 当前已投币 {res} 个")
         else:
-            failed("获取投币情况失败")
+            failed(f"获取投币情况接口返回异常: code={resp.get('code')}, message={resp.get('message', '未知错误')}")
 
         return res
     @property

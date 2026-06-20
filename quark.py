@@ -103,6 +103,7 @@ class Quark:
         if response.get("data"):
             return response["data"]
         else:
+            print(f"❌ 获取成长信息接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
             return False
 
     def get_growth_sign(self):
@@ -124,7 +125,8 @@ class Quark:
         if response.get("data"):
             return True, response["data"]["sign_daily_reward"]
         else:
-            return False, response["message"]
+            print(f"❌ 签到接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
+            return False, response.get("message", "未知错误")
 
     def queryBalance(self):
         '''
@@ -140,7 +142,8 @@ class Quark:
         if response.get("data"):
             return response["data"]["balance"]
         else:
-            return response["msg"]
+            print(f"❌ 查询抽奖余额接口返回异常: code={response.get('code')}, msg={response.get('msg')}")
+            return response.get("msg", "未知错误")
 
     def do_sign(self):
         '''
@@ -220,6 +223,7 @@ def quark_main():
     print("✅ 检测到共", len(cookie_quark), "个夸克账号\n")
 
     all_results = []
+    has_error = False
     i = 0
     while i < len(cookie_quark):
         # 获取user_data参数
@@ -238,9 +242,17 @@ def quark_main():
         msg += log + "\n"
         all_results.append(log)
 
+        # 检查是否有失败标记
+        if "❌" in log:
+            has_error = True
+
         i += 1
+
     try:
-        send('夸克自动签到', '成功')
+        if has_error:
+            send('夸克自动签到', '部分账号签到失败，请查看运行日志')
+        else:
+            send('夸克自动签到', '成功')
     except Exception as err:
         send('夸克自动签到出现异常', err)
         print('%s\n❌ 错误，请查看运行日志！' % err)
