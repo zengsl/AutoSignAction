@@ -23,4 +23,8 @@ COOKIE_QUARK  登录信息
 
 <img width="1235" height="1165" alt="988a056b94af98364edc3dca350bab95" src="https://github.com/user-attachments/assets/1fa084bf-163b-4602-b316-67edb8463b52" />
 
+格式：
+user=xxx;kps=xxx;sign=xxx;vcode=xxx
+user=xxx;kps=xxx;sign=xxx;vcode=xxx
+
 PUSH消息通知用token 用的免费的Qmsg酱 https://qmsg.zendee.cn/ 
