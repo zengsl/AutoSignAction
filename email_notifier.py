@@ -97,13 +97,14 @@ class EmailNotifier:
             return False
 
 
-def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: str) -> str:
+def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: str, duration: Optional[float] = None) -> str:
     """
     构建 Bilibili 签到报告 HTML 内容
 
     Args:
         results: 签到结果列表，每个元素是 BiliBili.start() 的原始返回值
         execution_time: 执行时间字符串
+        duration: 执行时长（秒）
 
     Returns:
         HTML 格式的报告内容
@@ -124,6 +125,32 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
     else:
         status_color = '#faad14'
         status_text = f'成功 {success_count}，失败 {fail_count}'
+
+    # 计算任务统计
+    task_stats = {
+        'watch': {'success': 0, 'fail': 0},
+        'share': {'success': 0, 'fail': 0},
+        'coins': {'success': 0, 'fail': 0},
+        'comics': {'success': 0, 'fail': 0},
+        'lb': {'success': 0, 'fail': 0},
+        'toCoin': {'success': 0, 'fail': 0},
+    }
+
+    for r in success_list:
+        if r.get('watch'):
+            task_stats['watch']['success'] += 1
+        if r.get('share'):
+            task_stats['share']['success'] += 1
+        if r.get('coins'):
+            task_stats['coins']['success'] += 1
+        if r.get('comics'):
+            task_stats['comics']['success'] += 1
+        if r.get('lb'):
+            task_stats['lb']['success'] += 1
+        if r.get('toCoin'):
+            task_stats['toCoin']['success'] += 1
+
+    duration_text = f'{duration:.1f}秒' if duration else '未知'
 
     html = f"""
 <!DOCTYPE html>
@@ -158,9 +185,23 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
         }}
         .info-box {{
             background: #f5f5f5;
-            padding: 12px;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 6px;
             margin-bottom: 20px;
+        }}
+        .info-row {{
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }}
+        .info-row:last-child {{
+            margin-bottom: 0;
+        }}
+        .info-label {{
+            color: #666;
+        }}
+        .info-value {{
+            font-weight: bold;
         }}
         .status {{
             display: inline-block;
@@ -170,6 +211,38 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
             font-weight: bold;
             background-color: {status_color};
         }}
+        .stats-box {{
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }}
+        .stats-title {{
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 10px;
+        }}
+        .stats-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }}
+        .stat-item {{
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }}
+        .stat-label {{
+            font-size: 12px;
+            color: #666;
+        }}
+        .stat-value {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #1890ff;
+        }}
         .account-card {{
             background: #fafafa;
             border: 1px solid #e8e8e8;
@@ -177,11 +250,23 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
             padding: 15px;
             margin-bottom: 15px;
         }}
+        .account-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }}
         .account-name {{
             font-size: 18px;
             font-weight: bold;
             color: #1890ff;
-            margin-bottom: 10px;
+        }}
+        .account-uid {{
+            font-size: 12px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
         }}
         .account-info {{
             display: grid;
@@ -209,11 +294,35 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
             margin-top: 10px;
         }}
         .task-item {{
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
         }}
         .task-item:last-child {{
             border-bottom: none;
+        }}
+        .task-icon {{
+            margin-right: 8px;
+            font-size: 16px;
+        }}
+        .task-text {{
+            flex: 1;
+        }}
+        .task-status {{
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }}
+        .task-success {{
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }}
+        .task-fail {{
+            background: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
         }}
         .success {{
             color: #52c41a;
@@ -239,13 +348,58 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
     </div>
     <div class="content">
         <div class="info-box">
-            <strong>执行时间:</strong> {execution_time}<br>
-            <strong>签到状态:</strong> <span class="status">{status_text}</span>
+            <div class="info-row">
+                <span class="info-label">执行时间</span>
+                <span class="info-value">{execution_time}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">执行时长</span>
+                <span class="info-value">{duration_text}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">签到状态</span>
+                <span class="status">{status_text}</span>
+            </div>
+        </div>
+"""
+
+    # 添加任务统计（只有成功账号时显示）
+    if success_list:
+        html += f"""
+        <div class="stats-box">
+            <div class="stats-title">📊 任务执行统计</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">观看视频</div>
+                    <div class="stat-value">{task_stats['watch']['success']}/{len(success_list)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">分享视频</div>
+                    <div class="stat-value">{task_stats['share']['success']}/{len(success_list)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">投币</div>
+                    <div class="stat-value">{task_stats['coins']['success']}/{len(success_list)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">漫画签到</div>
+                    <div class="stat-value">{task_stats['comics']['success']}/{len(success_list)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">直播签到</div>
+                    <div class="stat-value">{task_stats['lb']['success']}/{len(success_list)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">银瓜子兑换</div>
+                    <div class="stat-value">{task_stats['toCoin']['success']}/{len(success_list)}</div>
+                </div>
+            </div>
         </div>
 """
 
     for r in results:
         name = r.get('name', '未知')
+        uid = r.get('uid', '')
         level = r.get('level', '-')
         coin = r.get('coin', '-')
         exp = r.get('exp', '-')
@@ -254,7 +408,10 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
 
         html += f"""
         <div class="account-card">
-            <div class="account-name">{'❌' if is_fail else '✅'} {name}</div>
+            <div class="account-header">
+                <div class="account-name">{'❌' if is_fail else '✅'} {name}</div>
+                {'<div class="account-uid">UID: ' + uid + '</div>' if uid else ''}
+            </div>
 """
         if is_fail:
             html += f"""
@@ -281,37 +438,109 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
             watch = r.get('watch')
             if watch:
                 html += f"""
-                <div class="task-item">🎬 {watch}</div>
+                <div class="task-item">
+                    <span class="task-icon">🎬</span>
+                    <span class="task-text">{watch}</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">🎬</span>
+                    <span class="task-text">观看视频</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             share = r.get('share')
             if share:
                 html += f"""
-                <div class="task-item">📤 分享视频成功</div>
+                <div class="task-item">
+                    <span class="task-icon">📤</span>
+                    <span class="task-text">分享视频: {share}</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">📤</span>
+                    <span class="task-text">分享视频</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             coins = r.get('coins')
             if coins:
                 html += f"""
-                <div class="task-item">🪙 投币: {', '.join(coins)}</div>
+                <div class="task-item">
+                    <span class="task-icon">🪙</span>
+                    <span class="task-text">投币: {', '.join(coins)}</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">🪙</span>
+                    <span class="task-text">投币</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             comics = r.get('comics')
             if comics:
                 html += f"""
-                <div class="task-item">📖 漫画签到: 连续 {comics} 天</div>
+                <div class="task-item">
+                    <span class="task-icon">📖</span>
+                    <span class="task-text">漫画签到: 连续 {comics} 天</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">📖</span>
+                    <span class="task-text">漫画签到</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             lb = r.get('lb')
             if lb:
                 html += f"""
-                <div class="task-item">📺 直播签到: {lb.get('raward', '成功')}</div>
+                <div class="task-item">
+                    <span class="task-icon">📺</span>
+                    <span class="task-text">直播签到: {lb.get('raward', '成功')}</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">📺</span>
+                    <span class="task-text">直播签到</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             toCoin = r.get('toCoin')
             if toCoin:
                 html += f"""
-                <div class="task-item">💰 银瓜子兑换: {toCoin}</div>
+                <div class="task-item">
+                    <span class="task-icon">💰</span>
+                    <span class="task-text">银瓜子兑换: {toCoin}</span>
+                    <span class="task-status task-success">成功</span>
+                </div>
+"""
+            else:
+                html += f"""
+                <div class="task-item">
+                    <span class="task-icon">💰</span>
+                    <span class="task-text">银瓜子兑换</span>
+                    <span class="task-status task-fail">失败</span>
+                </div>
 """
 
             html += """
@@ -333,13 +562,14 @@ def build_bilibili_report_html(results: List[Dict[str, Any]], execution_time: st
     return html
 
 
-def build_bilibili_report_text(results: List[Dict[str, Any]], execution_time: str) -> str:
+def build_bilibili_report_text(results: List[Dict[str, Any]], execution_time: str, duration: Optional[float] = None) -> str:
     """
     构建 Bilibili 签到报告纯文本内容
 
     Args:
         results: 签到结果列表
         execution_time: 执行时间字符串
+        duration: 执行时长（秒）
 
     Returns:
         纯文本格式的报告内容
@@ -347,18 +577,42 @@ def build_bilibili_report_text(results: List[Dict[str, Any]], execution_time: st
     success_list = [r for r in results if r.get('name') != '未登录' and r.get('name') != 'Unkown']
     fail_list = [r for r in results if r.get('name') == '未登录' or r.get('name') == 'Unkown']
 
+    duration_text = f'{duration:.1f}秒' if duration else '未知'
+
     lines = [
         'Bilibili 签到报告',
         '=' * 40,
         f'执行时间: {execution_time}',
+        f'执行时长: {duration_text}',
         ''
     ]
 
+    # 任务统计
+    if success_list:
+        task_stats = {
+            'watch': sum(1 for r in success_list if r.get('watch')),
+            'share': sum(1 for r in success_list if r.get('share')),
+            'coins': sum(1 for r in success_list if r.get('coins')),
+            'comics': sum(1 for r in success_list if r.get('comics')),
+            'lb': sum(1 for r in success_list if r.get('lb')),
+            'toCoin': sum(1 for r in success_list if r.get('toCoin')),
+        }
+        lines.append('📊 任务执行统计:')
+        lines.append(f'  观看视频: {task_stats["watch"]}/{len(success_list)}')
+        lines.append(f'  分享视频: {task_stats["share"]}/{len(success_list)}')
+        lines.append(f'  投币: {task_stats["coins"]}/{len(success_list)}')
+        lines.append(f'  漫画签到: {task_stats["comics"]}/{len(success_list)}')
+        lines.append(f'  直播签到: {task_stats["lb"]}/{len(success_list)}')
+        lines.append(f'  银瓜子兑换: {task_stats["toCoin"]}/{len(success_list)}')
+        lines.append('')
+
     for r in results:
         name = r.get('name', '未知')
+        uid = r.get('uid', '')
         is_fail = name == '未登录' or name == 'Unkown'
 
-        lines.append(f'{"❌" if is_fail else "✅"} {name}')
+        uid_text = f' (UID: {uid})' if uid else ''
+        lines.append(f'{"❌" if is_fail else "✅"} {name}{uid_text}')
 
         if is_fail:
             lines.append('  签到失败：账号未登录或 Cookie 失效')
@@ -371,26 +625,38 @@ def build_bilibili_report_text(results: List[Dict[str, Any]], execution_time: st
             watch = r.get('watch')
             if watch:
                 lines.append(f'  🎬 {watch}')
+            else:
+                lines.append(f'  🎬 观看视频: 失败')
 
             share = r.get('share')
             if share:
-                lines.append(f'  📤 分享视频成功')
+                lines.append(f'  📤 分享视频: {share}')
+            else:
+                lines.append(f'  📤 分享视频: 失败')
 
             coins = r.get('coins')
             if coins:
                 lines.append(f'  🪙 投币: {", ".join(coins)}')
+            else:
+                lines.append(f'  🪙 投币: 失败')
 
             comics = r.get('comics')
             if comics:
                 lines.append(f'  📖 漫画签到: 连续 {comics} 天')
+            else:
+                lines.append(f'  📖 漫画签到: 失败')
 
             lb = r.get('lb')
             if lb:
                 lines.append(f'  📺 直播签到: {lb.get("raward", "成功")}')
+            else:
+                lines.append(f'  📺 直播签到: 失败')
 
             toCoin = r.get('toCoin')
             if toCoin:
                 lines.append(f'  💰 银瓜子兑换: {toCoin}')
+            else:
+                lines.append(f'  💰 银瓜子兑换: 失败')
 
         lines.append('')
 
@@ -409,13 +675,14 @@ def build_bilibili_report_text(results: List[Dict[str, Any]], execution_time: st
     return '\n'.join(lines)
 
 
-def build_quark_report_html(results: List[str], execution_time: str) -> str:
+def build_quark_report_html(results: List[str], execution_time: str, duration: Optional[float] = None) -> str:
     """
     构建夸克网盘签到报告 HTML 内容
 
     Args:
         results: 签到结果列表，每个元素是 Quark.do_sign() 的返回值字符串
         execution_time: 执行时间字符串
+        duration: 执行时长（秒）
 
     Returns:
         HTML 格式的报告内容
@@ -433,6 +700,8 @@ def build_quark_report_html(results: List[str], execution_time: str) -> str:
     else:
         status_color = '#faad14'
         status_text = f'成功 {success_count}，失败 {fail_count}'
+
+    duration_text = f'{duration:.1f}秒' if duration else '未知'
 
     html = f"""
 <!DOCTYPE html>
@@ -467,9 +736,23 @@ def build_quark_report_html(results: List[str], execution_time: str) -> str:
         }}
         .info-box {{
             background: #f5f5f5;
-            padding: 12px;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 6px;
             margin-bottom: 20px;
+        }}
+        .info-row {{
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }}
+        .info-row:last-child {{
+            margin-bottom: 0;
+        }}
+        .info-label {{
+            color: #666;
+        }}
+        .info-value {{
+            font-weight: bold;
         }}
         .status {{
             display: inline-block;
@@ -486,6 +769,12 @@ def build_quark_report_html(results: List[str], execution_time: str) -> str:
             padding: 15px;
             margin-bottom: 15px;
             white-space: pre-line;
+        }}
+        .account-header {{
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 10px;
+            font-size: 16px;
         }}
         .footer {{
             background: #f5f5f5;
@@ -505,15 +794,25 @@ def build_quark_report_html(results: List[str], execution_time: str) -> str:
     </div>
     <div class="content">
         <div class="info-box">
-            <strong>执行时间:</strong> {execution_time}<br>
-            <strong>签到状态:</strong> <span class="status">{status_text}</span>
+            <div class="info-row">
+                <span class="info-label">执行时间</span>
+                <span class="info-value">{execution_time}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">执行时长</span>
+                <span class="info-value">{duration_text}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">签到状态</span>
+                <span class="status">{status_text}</span>
+            </div>
         </div>
 """
 
     for i, result in enumerate(results, 1):
         html += f"""
         <div class="account-card">
-            <strong>🙍🏻‍♂️ 第 {i} 个账号</strong><br>
+            <div class="account-header">🙍🏻‍♂️ 第 {i} 个账号</div>
 {result}
         </div>
 """
@@ -529,13 +828,14 @@ def build_quark_report_html(results: List[str], execution_time: str) -> str:
     return html
 
 
-def build_quark_report_text(results: List[str], execution_time: str) -> str:
+def build_quark_report_text(results: List[str], execution_time: str, duration: Optional[float] = None) -> str:
     """
     构建夸克网盘签到报告纯文本内容
 
     Args:
         results: 签到结果列表
         execution_time: 执行时间字符串
+        duration: 执行时长（秒）
 
     Returns:
         纯文本格式的报告内容
@@ -544,10 +844,13 @@ def build_quark_report_text(results: List[str], execution_time: str) -> str:
     fail_count = len(results) - success_count
     total = len(results)
 
+    duration_text = f'{duration:.1f}秒' if duration else '未知'
+
     lines = [
         '夸克网盘签到报告',
         '=' * 40,
         f'执行时间: {execution_time}',
+        f'执行时长: {duration_text}',
         ''
     ]
 
@@ -588,13 +891,14 @@ def _get_email_config():
     }
 
 
-def send_bilibili_notification(results: List[Dict[str, Any]], execution_time: Optional[str] = None) -> bool:
+def send_bilibili_notification(results: List[Dict[str, Any]], execution_time: Optional[str] = None, duration: Optional[float] = None) -> bool:
     """
     发送 Bilibili 签到通知邮件
 
     Args:
         results: 签到结果列表，每个元素是 BiliBili.start() 的原始返回值
         execution_time: 执行时间（可选，默认使用当前时间）
+        duration: 执行时长（秒）
 
     Returns:
         是否发送成功
@@ -606,8 +910,8 @@ def send_bilibili_notification(results: List[Dict[str, Any]], execution_time: Op
     if not execution_time:
         execution_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    html_content = build_bilibili_report_html(results, execution_time)
-    text_content = build_bilibili_report_text(results, execution_time)
+    html_content = build_bilibili_report_html(results, execution_time, duration)
+    text_content = build_bilibili_report_text(results, execution_time, duration)
 
     success_list = [r for r in results if r.get('name') != '未登录' and r.get('name') != 'Unkown']
     fail_list = [r for r in results if r.get('name') == '未登录' or r.get('name') == 'Unkown']
@@ -633,13 +937,14 @@ def send_bilibili_notification(results: List[Dict[str, Any]], execution_time: Op
     return success
 
 
-def send_quark_notification(results: List[str], execution_time: Optional[str] = None) -> bool:
+def send_quark_notification(results: List[str], execution_time: Optional[str] = None, duration: Optional[float] = None) -> bool:
     """
     发送夸克网盘签到通知邮件
 
     Args:
         results: 签到结果列表，每个元素是 Quark.do_sign() 的返回值字符串
         execution_time: 执行时间（可选，默认使用当前时间）
+        duration: 执行时长（秒）
 
     Returns:
         是否发送成功
@@ -651,8 +956,8 @@ def send_quark_notification(results: List[str], execution_time: Optional[str] = 
     if not execution_time:
         execution_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    html_content = build_quark_report_html(results, execution_time)
-    text_content = build_quark_report_text(results, execution_time)
+    html_content = build_quark_report_html(results, execution_time, duration)
+    text_content = build_quark_report_text(results, execution_time, duration)
 
     success_count = sum(1 for r in results if '✅' in r and '❌' not in r)
     fail_count = len(results) - success_count

@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 
 import requests
 
@@ -222,6 +223,7 @@ def quark_main():
     主函数
     :return: 返回一个字符串，包含签到结果
     '''
+    start_time = time.time()
     msg = ""
     global cookie_quark
     cookie_quark = get_env()
@@ -254,6 +256,9 @@ def quark_main():
 
         i += 1
 
+    # 计算执行时长
+    duration = time.time() - start_time
+
     try:
         if has_error:
             send('夸克自动签到', '部分账号签到失败，请查看运行日志')
@@ -266,7 +271,7 @@ def quark_main():
     # 发送邮件通知
     if all_results:
         try:
-            send_quark_notification(all_results)
+            send_quark_notification(all_results, duration=duration)
         except Exception as e:
             print(f"邮件通知发送异常: {e}")
 

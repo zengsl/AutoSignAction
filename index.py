@@ -1,5 +1,6 @@
 import json
 import sys , os
+import time
 from push.tools.tools import failed, handler, info, success
 
 
@@ -59,6 +60,7 @@ def pushMessage(message, config):
 
 
 def bilibiliJob(*args):
+    start_time = time.time()
     accounts = json.loads(os.environ.get("MULTI", default="{}"), strict=False)
     push_together = json.loads(os.environ.get("PUSH", default="{}"), strict=False)
     cookie= os.environ.get("BILIBILI_COOKIE", default="{}")
@@ -75,10 +77,13 @@ def bilibiliJob(*args):
             if hasattr(obj, '_raw_result'):
                 all_results.append(obj._raw_result)
 
+    # 计算执行时长
+    duration = time.time() - start_time
+
     # 发送邮件通知
     if all_results:
         try:
-            send_bilibili_notification(all_results)
+            send_bilibili_notification(all_results, duration=duration)
         except Exception as e:
             info(f"邮件通知发送异常: {e}")
 

@@ -514,6 +514,7 @@ class BiliBili:
             info(f"{self._log_prefix} 步骤8: 执行银瓜子兑换任务")
             toCoin_result = self.toCoin()  # 银瓜子兑换硬币
             result = {
+                "uid": self.uid,
                 "name": self.name,
                 "level": self.level,
                 "coin": self.coin,
