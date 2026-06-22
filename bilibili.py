@@ -100,6 +100,7 @@ class BiliBili:
                 VIDEO_INFO,
                 params={"bvid": bv},
                 headers=self.headers,
+                timeout=30,
             ).json()
 
             if rep["code"] == 0:
@@ -114,13 +115,15 @@ class BiliBili:
                 }
             else:
                 failed(f"{self._log_prefix} 获取视频信息接口返回异常: code={rep['code']}, message={rep['message']}")
+        except req.exceptions.Timeout:
+            failed(f"{self._log_prefix} 获取视频信息超时(30秒)")
         except Exception as ex:
             failed(f"{self._log_prefix} 获取视频信息时出错, 原因: {ex}")
 
     # 获取用户信息
     def get_user_info(self):
         try:
-            rep = req.get(PERSONAL_INFO, headers=self.headers).json()
+            rep = req.get(PERSONAL_INFO, headers=self.headers, timeout=30).json()
 
             if rep["code"] == 0:
                 data = rep["data"]
@@ -140,6 +143,13 @@ class BiliBili:
                 self.login = rep["message"]!='账号未登录'
                 failed(f"{self._log_prefix} 获取用户信息接口返回异常: code={rep['code']}, message={rep['message']}")
                 raise Exception(rep["message"])
+        except req.exceptions.Timeout:
+            failed(f"{self._log_prefix} 获取用户信息超时(30秒)")
+            self.name = "Unkown"
+            self.level = "lv0"
+            self.coin = 0
+            self.exp = "0/0"
+            self.silence = "Unkown"
         except Exception as ex:
             failed(f"{self._log_prefix} 获取用户信息时出错, 原因: {ex}")
             self.name = "Unkown"
@@ -154,7 +164,7 @@ class BiliBili:
             return
 
         try:
-            rep = req.get(LIVE_BROADCAST, headers=self.headers).json()
+            rep = req.get(LIVE_BROADCAST, headers=self.headers, timeout=30).json()
 
             if rep["code"] == 0:
                 # 签到成功
@@ -185,6 +195,7 @@ class BiliBili:
                 data={
                     "platform": "android",
                 },
+                timeout=30,
             ).json()
 
             if rep["code"] == 0:
@@ -203,7 +214,7 @@ class BiliBili:
             failed(f"{self._log_prefix} 漫画签到失败, {ex}")
 
     def comics_checkin_info(self):
-        rep = req.post(COMICS_INFO, headers=self.headers).json()
+        rep = req.post(COMICS_INFO, headers=self.headers, timeout=30).json()
 
         if rep["code"] == 0:
             success(f"{self._log_prefix} 获取漫画签到信息成功, 您已经连续签到 {rep['data']['day_count']} 天")
@@ -228,7 +239,7 @@ class BiliBili:
             ]
         """
 
-        rep = req.get(RECOMMAND, params={"ps": ps, "pn": pn}, headers=self.headers).json()
+        rep = req.get(RECOMMAND, params={"ps": ps, "pn": pn}, headers=self.headers, timeout=30).json()
 
         if rep["code"] == 0:
             res = []
@@ -278,7 +289,7 @@ class BiliBili:
                     "csrf": self.csrf,
                 }
 
-                rep = req.post(COIN, headers=self.headers, data=data).json()
+                rep = req.post(COIN, headers=self.headers, data=data, timeout=30).json()
 
                 if rep["code"] == 0:
                     # 投币成功
@@ -309,7 +320,7 @@ class BiliBili:
                 "csrf": self.csrf,
             }
 
-            rep = req.post(VIDEO_SHARE, data=data, headers=self.headers).json()
+            rep = req.post(VIDEO_SHARE, data=data, headers=self.headers, timeout=30).json()
 
             if rep["code"] == 0:
                 # 如果分享成功, 退出循环, 并返回分享的视频名
@@ -346,7 +357,7 @@ class BiliBili:
                 "stime": int(time.time()),
             }
 
-            rep = req.post(VIDEO_CLICK, data=data, headers=self.headers).json()
+            rep = req.post(VIDEO_CLICK, data=data, headers=self.headers, timeout=30).json()
 
             # 进入视频页
             if rep["code"] == 0:
@@ -363,7 +374,7 @@ class BiliBili:
                     "start_ts": int(time.time()),
                 }
 
-                rep = req.post(VIDEO_HEARTBEAT, data=data, headers=self.headers).json()
+                rep = req.post(VIDEO_HEARTBEAT, data=data, headers=self.headers, timeout=30).json()
 
                 if rep["code"] == 0:
                     # 模拟观看视频
@@ -377,6 +388,7 @@ class BiliBili:
                         VIDEO_HEARTBEAT,
                         data=data,
                         headers=self.headers,
+                        timeout=30,
                     ).json()
 
                     if rep["code"] == 0:
@@ -407,6 +419,7 @@ class BiliBili:
                 "csrf_token": self.csrf,
                 "csrf": self.csrf,
             },
+            timeout=30,
         ).json()
         info(f"{self._log_prefix} 银瓜子兑换结果: {resp}")
         return resp.get("message", "兑换失败")
@@ -419,6 +432,7 @@ class BiliBili:
                 "csrf": self.csrf,
                 "jsonp": "jsonp",
             },
+            timeout=30,
         ).json()
 
         res = 0
@@ -463,11 +477,14 @@ class BiliBili:
 
     @handler
     def start(self):
+        info(f"{self._log_prefix} 开始执行签到任务")
         if not self.should_run():
             info(f"{self._log_prefix} 不需要执行")
             return
+        info(f"{self._log_prefix} 步骤1: 获取用户信息")
         self.get_user_info()  # 获取用户信息
         if not self.login:
+            info(f"{self._log_prefix} 用户未登录，跳过后续任务")
             return {
                 "name": "未登录",
                 "level": self.level,
@@ -482,18 +499,32 @@ class BiliBili:
                 "toCoin": None,
             }
         else:
+            info(f"{self._log_prefix} 步骤2: 获取推荐视频")
             videos = self.video_suggest()  # 获取热门视频
+            info(f"{self._log_prefix} 步骤3: 执行投币任务")
+            coins_result = self.give_coin(videos)  # 投币
+            info(f"{self._log_prefix} 步骤4: 执行分享视频任务")
+            share_result = self.share_video(videos)  # 视频分享
+            info(f"{self._log_prefix} 步骤5: 执行漫画签到任务")
+            comics_result = self.comics_checkin()  # 漫画签到
+            info(f"{self._log_prefix} 步骤6: 执行直播签到任务")
+            lb_result = self.live_broadcast_checkin()  # 直播签到
+            info(f"{self._log_prefix} 步骤7: 执行观看视频任务")
+            watch_result = self.watch(videos[0]["bvid"])  # 观看视频
+            info(f"{self._log_prefix} 步骤8: 执行银瓜子兑换任务")
+            toCoin_result = self.toCoin()  # 银瓜子兑换硬币
             result = {
                 "name": self.name,
                 "level": self.level,
                 "coin": self.coin,
                 "exp": self.exp,
-                "coins": self.give_coin(videos),  # 投币
-                "share": self.share_video(videos),  # 视频分享
-                "comics": self.comics_checkin(),  # 漫画签到
-                "lb": self.live_broadcast_checkin(),  # 直播签到
-                "watch": self.watch(videos[0]["bvid"]),  # 观看视频
-                "toCoin": self.toCoin(),  # 银瓜子兑换硬币,
+                "coins": coins_result,
+                "share": share_result,
+                "comics": comics_result,
+                "lb": lb_result,
+                "watch": watch_result,
+                "toCoin": toCoin_result,
             }
+            info(f"{self._log_prefix} 所有任务执行完毕，保存结果")
             self.build_save_data()
             return result

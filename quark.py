@@ -104,7 +104,7 @@ class Quark:
             "sign": self.param.get('sign'),
             "vcode": self.param.get('vcode')
         }
-        response = requests.get(url=url, params=querystring).json()
+        response = requests.get(url=url, params=querystring, timeout=30).json()
         # print(response)
         if response.get("data"):
             return response["data"]
@@ -126,7 +126,7 @@ class Quark:
             "vcode": self.param.get('vcode')
         }
         data = {"sign_cyclic": True}
-        response = requests.post(url=url, json=data, params=querystring).json()
+        response = requests.post(url=url, json=data, params=querystring, timeout=30).json()
         # print(response)
         if response.get("data"):
             return True, response["data"]["sign_daily_reward"]
@@ -143,7 +143,7 @@ class Quark:
             "moduleCode": "1f3563d38896438db994f118d4ff53cb",
             "kps": self.param.get('kps'),
         }
-        response = requests.get(url=url, params=querystring).json()
+        response = requests.get(url=url, params=querystring, timeout=30).json()
         # print(response)
         if response.get("data"):
             return response["data"]["balance"]

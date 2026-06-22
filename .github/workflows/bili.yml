@@ -19,6 +19,7 @@ jobs:
   bilibiliTask:
     name: '签到'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       TZ: Asia/Shanghai
     steps:
