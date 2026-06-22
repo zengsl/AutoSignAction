@@ -70,6 +70,14 @@ class BiliBili:
         self.task_date = now_date
         self.is_complete = True
 
+    @property
+    def _log_prefix(self):
+        """日志前缀，用于区分不同账户"""
+        name = getattr(self, 'name', None)
+        if name and name != "Unkown":
+            return f"[{name}({self.uid})]"
+        return f"[uid:{self.uid}]"
+
     @staticmethod
     def extract(key: str, cookie: str):
         """根据键从 cookie 中抽取数据
@@ -86,13 +94,12 @@ class BiliBili:
             return ""
 
     # 获取视频信息
-    @staticmethod
-    def get_video_info(bv):
+    def get_video_info(self, bv):
         try:
             rep = req.get(
                 VIDEO_INFO,
                 params={"bvid": bv},
-                headers=BiliBili.headers,
+                headers=self.headers,
             ).json()
 
             if rep["code"] == 0:
@@ -106,9 +113,9 @@ class BiliBili:
                     "title": data["title"],  # 视频标题
                 }
             else:
-                failed(f"获取视频信息接口返回异常: code={rep['code']}, message={rep['message']}")
+                failed(f"{self._log_prefix} 获取视频信息接口返回异常: code={rep['code']}, message={rep['message']}")
         except Exception as ex:
-            failed(f"获取视频信息时出错, 原因: {ex}")
+            failed(f"{self._log_prefix} 获取视频信息时出错, 原因: {ex}")
 
     # 获取用户信息
     def get_user_info(self):
@@ -128,13 +135,13 @@ class BiliBili:
                 self.exp = f"{current_exp}/{next_exp}"  # 经验
                 self.silence = data["silence"]  # 不知道是什么
 
-                success(f"获取用户信息成功, 用户: {self.name}")
+                success(f"{self._log_prefix} 获取用户信息成功, 用户: {self.name}")
             else:
                 self.login = rep["message"]!='账号未登录'
-                failed(f"获取用户信息接口返回异常: code={rep['code']}, message={rep['message']}")
+                failed(f"{self._log_prefix} 获取用户信息接口返回异常: code={rep['code']}, message={rep['message']}")
                 raise Exception(rep["message"])
         except Exception as ex:
-            failed(f"获取用户信息时出错, 原因: {ex}")
+            failed(f"{self._log_prefix} 获取用户信息时出错, 原因: {ex}")
             self.name = "Unkown"
             self.level = "lv0"
             self.coin = 0
@@ -153,18 +160,18 @@ class BiliBili:
                 # 签到成功
                 data = rep["data"]
 
-                success(f"直播签到: 奖励 {data['text']}")
+                success(f"{self._log_prefix} 直播签到: 奖励 {data['text']}")
 
                 return {
                     "raward": data["text"],
                     "specialText": data["specialText"],
                 }
             else:
-                failed(f"直播签到接口返回异常: code={rep['code']}, message={rep['message']}")
+                failed(f"{self._log_prefix} 直播签到接口返回异常: code={rep['code']}, message={rep['message']}")
                 raise Exception(rep["message"])
 
         except Exception as ex:
-            failed(f"直播签到失败, {ex}")
+            failed(f"{self._log_prefix} 直播签到失败, {ex}")
 
     # 漫画签到
     def comics_checkin(self):
@@ -181,7 +188,7 @@ class BiliBili:
             ).json()
 
             if rep["code"] == 0:
-                success("漫画签到完成")
+                success(f"{self._log_prefix} 漫画签到完成")
 
                 result = self.comics_checkin_info()
 
@@ -190,24 +197,23 @@ class BiliBili:
                 else:
                     return "unkown"
             else:
-                failed(f"漫画签到接口返回异常: code={rep['code']}, msg={rep.get('msg', 'Unknown error')}")
+                failed(f"{self._log_prefix} 漫画签到接口返回异常: code={rep['code']}, msg={rep.get('msg', 'Unknown error')}")
                 raise Exception(rep.get("msg", "Unknown error"))
         except Exception as ex:
-            failed(f"漫画签到失败, {ex}")
+            failed(f"{self._log_prefix} 漫画签到失败, {ex}")
 
     def comics_checkin_info(self):
         rep = req.post(COMICS_INFO, headers=self.headers).json()
 
         if rep["code"] == 0:
-            success(f"获取漫画签到信息成功, 您已经连续签到 {rep['data']['day_count']} 天")
+            success(f"{self._log_prefix} 获取漫画签到信息成功, 您已经连续签到 {rep['data']['day_count']} 天")
 
             return rep["data"]["day_count"]
         else:
-            failed(f"获取漫画签到信息接口返回异常: code={rep['code']}, msg={rep.get('msg', '未知错误')}")
+            failed(f"{self._log_prefix} 获取漫画签到信息接口返回异常: code={rep['code']}, msg={rep.get('msg', '未知错误')}")
 
     # 获取推荐视频
-    @staticmethod
-    def video_suggest(ps: int = 50, pn: int = 1) -> list or None:
+    def video_suggest(self, ps: int = 50, pn: int = 1) -> list or None:
         """
         Args:
             ps (int): 视频个数
@@ -222,7 +228,7 @@ class BiliBili:
             ]
         """
 
-        rep = req.get(RECOMMAND, params={"ps": ps, "pn": pn},headers=headers).json()
+        rep = req.get(RECOMMAND, params={"ps": ps, "pn": pn}, headers=self.headers).json()
 
         if rep["code"] == 0:
             res = []
@@ -241,7 +247,7 @@ class BiliBili:
 
             return res
         else:
-            failed(f"获取视频推荐列表接口返回异常: code={rep['code']}, message={rep['message']}")
+            failed(f"{self._log_prefix} 获取视频推荐列表接口返回异常: code={rep['code']}, message={rep['message']}")
 
             return [{"bvid": "BV1LS4y1C7Pa"}]
 
@@ -257,7 +263,7 @@ class BiliBili:
         surplus = max_coin - coined
         surplus = 0 if surplus < 0 else surplus
 
-        info(f"还需投币 {surplus} 个")
+        info(f"{self._log_prefix} 还需投币 {surplus} 个")
         
         coin_videos = []
 
@@ -276,16 +282,16 @@ class BiliBili:
 
                 if rep["code"] == 0:
                     # 投币成功
-                    success(f"给[{video['title']}]投币成功")
+                    success(f"{self._log_prefix} 给[{video['title']}]投币成功")
 
                     coin_videos.append(video["title"])
 
                     coined += 1  # 投币次数加 1
                 else:
                     # 投币失败
-                    failed(f"给[{video['title']}]投币接口返回异常: code={rep['code']}, message={rep['message']}")
+                    failed(f"{self._log_prefix} 给[{video['title']}]投币接口返回异常: code={rep['code']}, message={rep['message']}")
             else:
-                success(f"投币完成, 今日共投了 {coined} 个硬币")
+                success(f"{self._log_prefix} 投币完成, 今日共投了 {coined} 个硬币")
 
                 break
 
@@ -307,11 +313,11 @@ class BiliBili:
 
             if rep["code"] == 0:
                 # 如果分享成功, 退出循环, 并返回分享的视频名
-                success(f"分享视频完成, [{video['title']}]")
+                success(f"{self._log_prefix} 分享视频完成, [{video['title']}]")
 
                 return video["title"]
             else:
-                failed(f"分享视频[{video['title']}]接口返回异常: code={rep['code']}, message={rep['message']}")
+                failed(f"{self._log_prefix} 分享视频[{video['title']}]接口返回异常: code={rep['code']}, message={rep['message']}")
                 if errorCount>3:
                     return
                 else:
@@ -325,7 +331,7 @@ class BiliBili:
         if not self.options.get("watch", False):
             return
 
-        video_info = BiliBili.get_video_info(bvid)
+        video_info = self.get_video_info(bvid)
 
         # 获取视频信息成功
         if video_info:
@@ -374,20 +380,20 @@ class BiliBili:
                     ).json()
 
                     if rep["code"] == 0:
-                        success(f"观看视频完成, [{video_info['title']}]")
+                        success(f"{self._log_prefix} 观看视频完成, [{video_info['title']}]")
 
                         # return f"观看视频[{video_info['title']}]成功"
                         return "观看视频成功"
                     else:
-                        failed(f"观看视频心跳上报接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
+                        failed(f"{self._log_prefix} 观看视频心跳上报接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
                 else:
-                    failed(f"观看视频心跳接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
+                    failed(f"{self._log_prefix} 观看视频心跳接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
             else:
-                failed(f"观看视频点击接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
+                failed(f"{self._log_prefix} 观看视频点击接口返回异常: code={rep['code']}, message={rep.get('message', '未知错误')}")
 
-            failed(f"观看视频失败, [{video_info['title']}]")
+            failed(f"{self._log_prefix} 观看视频失败, [{video_info['title']}]")
         else:
-            failed(f"观看视频失败, 获取视频信息失败: {bvid}")
+            failed(f"{self._log_prefix} 观看视频失败, 获取视频信息失败: {bvid}")
 
     # 银瓜子兑换银币
     def toCoin(self):
@@ -402,7 +408,7 @@ class BiliBili:
                 "csrf": self.csrf,
             },
         ).json()
-        print(resp)
+        info(f"{self._log_prefix} 银瓜子兑换结果: {resp}")
         return resp.get("message", "兑换失败")
 
     def getCoinLog(self):
@@ -428,9 +434,9 @@ class BiliBili:
                     if i["delta"] < 0:
                         res += -i["delta"]
             
-            success(f"获取硬币投递情况成功, 当前已投币 {res} 个")
+            success(f"{self._log_prefix} 获取硬币投递情况成功, 当前已投币 {res} 个")
         else:
-            failed(f"获取投币情况接口返回异常: code={resp.get('code')}, message={resp.get('message', '未知错误')}")
+            failed(f"{self._log_prefix} 获取投币情况接口返回异常: code={resp.get('code')}, message={resp.get('message', '未知错误')}")
 
         return res
     @property
@@ -458,7 +464,7 @@ class BiliBili:
     @handler
     def start(self):
         if not self.should_run():
-            print("不需要执行")
+            info(f"{self._log_prefix} 不需要执行")
             return
         self.get_user_info()  # 获取用户信息
         if not self.login:

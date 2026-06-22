@@ -72,6 +72,12 @@ class Quark:
         self.task_result_file_path = os.path.join(self.data_path, f'quark-{now_date}-dailySign.json')
         self.is_complete=False
 
+    @property
+    def _log_prefix(self):
+        """日志前缀，用于区分不同账户"""
+        user = self.param.get('user', '未知用户')
+        return f"[{user}]"
+
     def convert_bytes(self, b):
         '''
         将字节转换为 MB GB TB
@@ -103,7 +109,7 @@ class Quark:
         if response.get("data"):
             return response["data"]
         else:
-            print(f"❌ 获取成长信息接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
+            print(f"{self._log_prefix} ❌ 获取成长信息接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
             return False
 
     def get_growth_sign(self):
@@ -125,7 +131,7 @@ class Quark:
         if response.get("data"):
             return True, response["data"]["sign_daily_reward"]
         else:
-            print(f"❌ 签到接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
+            print(f"{self._log_prefix} ❌ 签到接口返回异常: code={response.get('code')}, message={response.get('message')}, status={response.get('status')}")
             return False, response.get("message", "未知错误")
 
     def queryBalance(self):
@@ -142,7 +148,7 @@ class Quark:
         if response.get("data"):
             return response["data"]["balance"]
         else:
-            print(f"❌ 查询抽奖余额接口返回异常: code={response.get('code')}, msg={response.get('msg')}")
+            print(f"{self._log_prefix} ❌ 查询抽奖余额接口返回异常: code={response.get('code')}, msg={response.get('msg')}")
             return response.get("msg", "未知错误")
 
     def do_sign(self):
@@ -151,7 +157,7 @@ class Quark:
         :return: 返回一个字符串，包含签到结果
         '''
         if not self.should_run():
-            print("不需要签到")
+            print(f"{self._log_prefix} 不需要签到")
             return ''
         log = ""
         # 每日领空间
