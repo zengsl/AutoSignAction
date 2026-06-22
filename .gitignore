@@ -6,3 +6,5 @@ __pycache__
 /logs
 env
 config
+# 环境变量配置
+.env
