@@ -7,4 +7,5 @@ from .push import (
     WorkWechatRobot,
     PushComposite,
     PushSender,
+    push_channels_from_env,
 )

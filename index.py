@@ -7,7 +7,7 @@ from push.tools.tools import failed, handler, info, success
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 from bilibili import BiliBili
-from push import PushSender, parse
+from push import PushSender, parse, push_channels_from_env
 from email_notifier import send_bilibili_notification
 
 import logging
@@ -62,7 +62,7 @@ def pushMessage(message, config):
 def bilibiliJob(*args):
     start_time = time.time()
     accounts = json.loads(os.environ.get("MULTI", default="{}"), strict=False)
-    push_together = json.loads(os.environ.get("PUSH", default="{}"), strict=False)
+    push_together = push_channels_from_env()
     cookie= os.environ.get("BILIBILI_COOKIE", default="{}")
 
     all_results = []

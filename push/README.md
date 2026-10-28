@@ -29,6 +29,15 @@ server.send("hello world.", title="test")
 ```
 
 ```python
+from push import Bark
+
+# key 可填设备 key，也可填完整地址(如自建服务 https://bark.example.com/xxx)
+bark = Bark(key="xxx")
+
+bark.send("hello world.", title="test")
+```
+
+```python
 from push import WorkWechatApp
 
 key = {
@@ -67,7 +76,7 @@ p.send("hello world. ╰(*°▽°*)╯", title="test")
 ```python
 from push import PushSender
 
-# 目前支持 pushplus, server, qmsg, workWechatRobot, workWechat
+# 目前支持 pushplus, server(Server酱), bark, qmsg, workWechatRobot, workWechat, mail
 p = PushSender("qmsg", "21301137366cbdbabfc91e505cccb81e")
 
 p.send("hello world")

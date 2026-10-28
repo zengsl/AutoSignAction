@@ -6,8 +6,8 @@ from logging import handlers
 
 from bs4 import BeautifulSoup
 
-from push import parse, Qmsg
-from push.push import Mail
+from push import parse, Qmsg, push_channels_from_env
+from push.push import Mail, PushSender
 
 
 def get_chapter_nodes(soup):
@@ -93,9 +93,7 @@ def doSend(title, message):
     if type(message) == str:
         message = [{'h1': {'content': title}}, {'txt': {'content': message}}]
     push_together = json.loads(os.environ.get("PUSH", default="{}"), strict=False)
-    if not push_together or not push_together['key']:
-        """不发送消息"""
-    else:
+    if isinstance(push_together, dict) and push_together.get('key'):
         parse_msg = parse(message, template="markdown")
         email_config = json.loads(push_together['key'])
         print(f"消息接收人列表：{email_config['receives']} {type(email_config['receives'])}")
@@ -105,4 +103,11 @@ def doSend(title, message):
              email_config["from"], email_config["to"], email_config["receives"]).send(
             parse_msg,
             title=title)
-        # Qmsg(push_together['key']).send(parse_msg, title=title)
+
+    # SERVERCHAN_SENDKEY / BARK_URL 等环境变量渠道
+    channels = push_channels_from_env()
+    if channels:
+        parse_msg = parse(message, template="markdown")
+        for item in channels:
+            p = PushSender(item.get("type"), item.get("key"))
+            p.send(parse_msg, title=title)

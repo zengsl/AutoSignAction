@@ -30,6 +30,8 @@ jobs:
         env:
           MULTI: ${{ vars.MULTI }}
           PUSH: ${{ secrets.PUSH  }}
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY  }}
+          BARK_URL: ${{ secrets.BARK_URL  }}
           BILIBILI_COOKIE: ${{ secrets.BILIBILI_COOKIE  }}
           EMAIL_SMTP_SERVER: ${{ secrets.EMAIL_SMTP_SERVER }}
           EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
